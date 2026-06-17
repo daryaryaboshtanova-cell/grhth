@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>iPhone Store</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;600&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f5f5f7;
+            color: #1d1d1f;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        header {
+            background: white;
+            padding: 15px 20px;
+            text-align: center;
+            border-bottom: 1px solid #d2d2d7;
+            font-size: 20px;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+        
+        .phone-card {
+            background: white;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .phone-card:active {
+            transform: scale(0.96);
+        }
+        
+        .phone-card img {
+            width: 100%;
+            height: 260px;
+            object-fit: contain;
+            background: #f8f8f8;
+            padding: 20px;
+        }
+        
+        .phone-info {
+            padding: 14px 16px;
+            text-align: center;
+        }
+        
+        .phone-name {
+            font-size: 17px;
+            font-weight: 600;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background: white;
+            width: 92%;
+            max-width: 420px;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        
+        .modal-header {
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #d2d2d7;
+        }
+        
+        .close { font-size: 28px; cursor: pointer; }
+        
+        .modal-image {
+            padding: 30px 20px 10px;
+            text-align: center;
+            background: #f8f8f8;
+        }
+        
+        .modal-image img {
+            width: 100%;
+            max-height: 380px;
+            object-fit: contain;
+        }
+        
+        .modal-info {
+            padding: 20px;
+        }
+        
+        .color-options {
+            display: flex;
+            gap: 12px;
+            margin: 20px 0;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .color-dot {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+        }
+        
+        button {
+            width: 100%;
+            background: #0071e3;
+            color: white;
+            border: none;
+            padding: 16px;
+            font-size: 17px;
+            font-weight: 600;
+            border-radius: 12px;
+            margin-top: 10px;
+        }
+        
+        .delivery {
+            display: none;
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 30px;
+            font-size: 15px;
+            z-index: 2000;
+        }
+    </style>
+</head>
+<body>
+    <header>📱 Choose Your iPhone</header>
+    
+    <div class="grid" id="grid"></div>
+    
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div id="modal-name" style="font-weight:600; font-size:18px;"></div>
+                <span class="close" onclick="closeModal()">×</span>
+            </div>
+            <div class="modal-image">
+                <img id="modal-image" src="" alt="">
+            </div>
+            <div class="modal-info">
+                <p style="text-align:center; color:#86868b; margin-bottom:15px;">Choose Color</p>
+                <div class="color-options" id="color-options"></div>
+                <button onclick="addToCart()">Add to Cart</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="delivery" class="delivery">
+        🚚 Package Sent! On the way to you...
+    </div>
+    
+    <script>
+        const phones = [
+            {
+                name: "iPhone 16 Pro Max",
+                colors: [
+                    {name: "Desert Titanium", hex: "#d4b89e", img: "https://store.storeimages.cdn-apple.com/4668/as-images.apple.com/is/iphone-16-pro-finish-select-202409?wid=5120&hei=2880&fmt=png-alpha&.v=1725646491000"},
+                    {name: "Black Titanium", hex: "#3a3a3c", img: "https://store.storeimages.cdn-apple.com/4668/as-images.apple.com/is/iphone-16-pro-finish-select-202409-black?wid=5120&hei=2880&fmt=png-alpha&.v=1725646491000"}
+                ]
+            },
+            {
+                name: "iPhone 16 Pro",
+                colors: [
+                    {name: "Desert Titanium", hex: "#d4b89e", img: "https://store.storeimages.cdn-apple.com/4668/as-images.apple.com/is/iphone-16-pro-finish-select-202409?wid=5120&hei=2880&fmt=png-alpha&.v=1725646491000"},
+                    {name: "Natural Titanium", hex: "#c7b9a0", img: "https://store.storeimages.cdn-apple.com/4668/as-images.apple.com/is/iphone-16-pro-finish-select-202409-natural?wid=5120&hei=2880&fmt=png-alpha&.v=1725646491000"}
+                ]
+            },
+            {
+                name: "iPhone 16 Plus",
+                colors: [
+                    {name: "Ultramarine", hex: "#2a6df2", img: "https://store.storeimages.cdn-apple.com/4668/as-images.apple.com/is/iphone-16-finish-select-202409?wid=5120&hei=2880&fmt=png-alpha&.v=1725646491000"},
+                    {name: "White", hex: "#f1f1f3", img: "https://store.storeimages.cdn-apple.com/4668/as-images.apple.com/is/iphone-16-finish-select-202409-white?wid=5120&hei=2880&fmt=png-alpha&.v=1725646491000"}
+                ]
+            },
+            {
+                name: "iPhone 16",
+                colors: [
+                    {name: "Ultramarine", hex: "#2a6df2", img: "https://store.storeimages.cdn-apple.com/4668/as-images.apple.com/is/iphone-16-finish-select-202409?wid=5120&hei=2880&fmt=png-alpha&.v=1725646491000"},
+                    {name: "Pink", hex: "#f8c1d2", img: "https://store.storeimages.cdn-apple.com/4668/as-images.apple.com/is/iphone-16-finish-select-202409-pink?wid=5120&hei=2880&fmt=png-alpha&.v=1725646491000"}
+                ]
+            }
+        ];
+        
+        let currentPhone = null;
+        let currentColorIndex = 0;
+        
+        function renderGrid() {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            
+            phones.forEach((phone, index) => {
+                const card = document.createElement('div');
+                card.className = 'phone-card';
+                card.innerHTML = `
+                    <img src="${phone.colors[0].img}" alt="${phone.name}">
+                    <div class="phone-info">
+                        <div class="phone-name">${phone.name}</div>
+                    </div>
+                `;
+                card.onclick = () => showModal(index);
+                grid.appendChild(card);
+            });
+        }
+        
+        function showModal(index) {
+            currentPhone = phones[index];
+            currentColorIndex = 0;
+            
+            document.getElementById('modal-name').textContent = currentPhone.name;
+            updateModalImage();
+            
+            const colorsDiv = document.getElementById('color-options');
+            colorsDiv.innerHTML = '';
+            
+            currentPhone.colors.forEach((color, i) => {
+                const dot = document.createElement('div');
+                dot.className = 'color-dot';
+                dot.style.backgroundColor = color.hex;
+                dot.onclick = (e) => {
+                    e.stopPropagation();
+                    currentColorIndex = i;
+                    updateModalImage();
+                };
+                colorsDiv.appendChild(dot);
+            });
+            
+            document.getElementById('modal').style.display = 'flex';
+        }
+        
+        function updateModalImage() {
+            document.getElementById('modal-image').src = currentPhone.colors[currentColorIndex].img;
+        }
+        
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+        }
+        
+        function addToCart() {
+            const anim = document.getElementById('delivery');
+            anim.style.display = 'block';
+            setTimeout(() => {
+                anim.style.display = 'none';
+            }, 3000);
+            closeModal();
+        }
+        
+        window.onload = renderGrid;
+    </script>
+</body>
+</html>
